@@ -10,6 +10,23 @@ A Python tool for extracting and analyzing player APM (Actions Per Minute) from 
 - Support for single file and batch processing
 - Output in human-readable text or JSON format
 - Export results to file
+- **Standalone Windows executable available** (no Python installation required!)
+
+## Getting Started
+
+### Option 1: Standalone Executable (Recommended for Windows Users)
+
+**No Python installation required!**
+
+1. Download the latest `aoe2-apm.exe` from the [Releases](../../releases) page
+2. Run it from the command line:
+   ```cmd
+   aoe2-apm.exe game.aoe2record
+   ```
+
+That's it! See [BUILD.md](BUILD.md) for how to build the executable yourself.
+
+### Option 2: Python Script (For Developers)
 
 ## Requirements
 
