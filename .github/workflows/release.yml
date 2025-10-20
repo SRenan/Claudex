@@ -1,0 +1,96 @@
+name: Build and Release Windows Executable
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Build executable with PyInstaller
+      run: |
+        pyinstaller aoe2-apm.spec
+
+    - name: Get file size
+      id: filesize
+      shell: bash
+      run: |
+        SIZE=$(stat -c%s "dist/aoe2-apm.exe" 2>/dev/null || stat -f%z "dist/aoe2-apm.exe" 2>/dev/null || echo "0")
+        SIZE_MB=$((SIZE / 1024 / 1024))
+        echo "size_mb=$SIZE_MB" >> $GITHUB_OUTPUT
+        echo "Executable size: ${SIZE_MB} MB"
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: AOE2 APM Analyzer ${{ github.ref_name }}
+        body: |
+          # AOE2 Record APM Analyzer ${{ github.ref_name }}
+
+          Standalone Windows executable for analyzing player APM from .aoe2record files.
+
+          ## Download
+
+          Download `aoe2-apm.exe` below and run it - **no Python installation required!**
+
+          ## Usage
+
+          ```cmd
+          aoe2-apm.exe game.aoe2record
+          aoe2-apm.exe game.aoe2record --format json
+          aoe2-apm.exe C:\Records\ --batch
+          ```
+
+          ## File Size
+
+          Executable size: ~${{ steps.filesize.outputs.size_mb }} MB
+
+          ## What's Included
+
+          - Python runtime
+          - mgz library (AOE2 parser)
+          - All dependencies
+          - Complete standalone tool
+
+          ## Features
+
+          - Parse .aoe2record files from Age of Empires 2: Definitive Edition
+          - Extract player APM statistics
+          - Support for single file and batch processing
+          - Output in text or JSON format
+          - Export results to file
+
+          For source code and documentation, see the [README](https://github.com/${{ github.repository }}).
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/aoe2-apm.exe
+        asset_name: aoe2-apm.exe
+        asset_content_type: application/vnd.microsoft.portable-executable
