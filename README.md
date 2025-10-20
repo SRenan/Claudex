@@ -214,6 +214,43 @@ Check the `examples.py` file for more usage examples.
 
 This project is open source and available under the MIT License.
 
+## For Maintainers
+
+### Creating Releases
+
+Releases are automated via GitHub Actions! To create a new release:
+
+```bash
+# Create a version tag
+git tag -a v1.0.0 -m "Release v1.0.0 - Description"
+
+# Push the tag
+git push origin v1.0.0
+```
+
+GitHub Actions will automatically:
+- Build the Windows executable
+- Create a GitHub Release
+- Upload the .exe as a downloadable asset
+
+See [RELEASE.md](RELEASE.md) for detailed instructions.
+
+### Building Locally
+
+To build the executable yourself:
+
+**Windows:**
+```cmd
+build.bat
+```
+
+**Linux/Mac:**
+```bash
+./build.sh
+```
+
+See [BUILD.md](BUILD.md) for more details.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues or pull requests.
