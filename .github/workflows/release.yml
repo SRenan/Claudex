@@ -6,6 +6,9 @@ on:
       - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
   workflow_dispatch:  # Allows manual trigger from GitHub UI
 
+permissions:
+  contents: write  # Required to create releases and upload assets
+
 jobs:
   build:
     runs-on: windows-latest
@@ -37,14 +40,10 @@ jobs:
         echo "size_mb=$SIZE_MB" >> $GITHUB_OUTPUT
         echo "Executable size: ${SIZE_MB} MB"
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create Release and Upload Assets
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref_name }}
-        release_name: AOE2 APM Analyzer ${{ github.ref_name }}
+        name: AOE2 APM Analyzer ${{ github.ref_name }}
         body: |
           # AOE2 Record APM Analyzer ${{ github.ref_name }}
 
@@ -82,15 +81,9 @@ jobs:
           - Export results to file
 
           For source code and documentation, see the [README](https://github.com/${{ github.repository }}).
+        files: |
+          dist/aoe2-apm.exe
         draft: false
         prerelease: false
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./dist/aoe2-apm.exe
-        asset_name: aoe2-apm.exe
-        asset_content_type: application/vnd.microsoft.portable-executable
