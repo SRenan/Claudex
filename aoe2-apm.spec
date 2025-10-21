@@ -8,7 +8,12 @@ Usage:
     pyinstaller aoe2-apm.spec
 """
 
+from PyInstaller.utils.hooks import collect_data_files
+
 block_cipher = None
+
+# Collect all data files from mgz package (includes JSON reference data)
+mgz_datas = collect_data_files('mgz')
 
 a = Analysis(
     ['apm_cli.py', 'apm_gui.py'],  # Include both CLI and GUI
@@ -17,13 +22,15 @@ a = Analysis(
     datas=[
         ('README.md', '.'),
         ('LICENSE', '.'),
-    ],
+    ] + mgz_datas,  # Add mgz data files
     hiddenimports=[
         'mgz',
         'mgz.summary',
         'mgz.fast',
         'mgz.header',
         'mgz.body',
+        'mgz.model',
+        'mgz.reference',
         'tkinter',
         'tkinter.filedialog',
         'tkinter.messagebox',
