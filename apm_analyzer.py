@@ -3,11 +3,12 @@ AOE2 Record APM Analyzer
 Extracts and calculates Actions Per Minute (APM) from .aoe2record files.
 """
 
-from mgz.summary import Summary
-from mgz import fast
+from mgz import header, fast
+from mgz.model import parse_match, serialize
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 import os
+import json
 
 
 class APMAnalyzer:
@@ -31,7 +32,7 @@ class APMAnalyzer:
             raise ValueError(f"File must be a .aoe2record file: {record_file_path}")
 
         self.record_file_path = record_file_path
-        self.summary = None
+        self.match = None
         self.players_info = {}
         self.apm_data = {}
 
@@ -44,70 +45,100 @@ class APMAnalyzer:
         """
         try:
             with open(self.record_file_path, 'rb') as f:
-                self.summary = Summary(f)
+                # Use the model API to parse the match
+                self.match = parse_match(f)
                 self._extract_player_info()
                 self._calculate_apm()
             return True
         except Exception as e:
             print(f"Error parsing file: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def _extract_player_info(self):
-        """Extract basic player information from the summary."""
-        if not self.summary:
+        """Extract basic player information from the match."""
+        if not self.match or not hasattr(self.match, 'players'):
             return
 
-        # Extract player information
-        for player in self.summary.get_players():
-            player_number = player.get('number')
-            if player_number is not None:
-                self.players_info[player_number] = {
-                    'name': player.get('name', 'Unknown'),
-                    'civilization': player.get('civilization', 'Unknown'),
-                    'color_id': player.get('color_id'),
-                    'winner': player.get('winner', False)
-                }
+        # Extract player information from the match model
+        try:
+            for player in self.match.players:
+                if player and hasattr(player, 'number'):
+                    player_number = player.number
+                    self.players_info[player_number] = {
+                        'name': getattr(player, 'name', 'Unknown'),
+                        'civilization': getattr(player, 'civilization', 'Unknown'),
+                        'color_id': getattr(player, 'color_id', None),
+                        'winner': getattr(player, 'winner', False)
+                    }
+        except Exception as e:
+            print(f"Warning: Could not extract player info: {e}")
 
     def _calculate_apm(self):
         """Calculate APM for each player based on their actions."""
-        if not self.summary:
+        if not self.match:
             return
 
-        # Get game duration in milliseconds
-        duration_ms = self.summary.get_duration()
-        if not duration_ms or duration_ms == 0:
-            print("Warning: Could not determine game duration")
-            return
+        # Get game duration
+        try:
+            if hasattr(self.match, 'duration'):
+                duration_ms = self.match.duration
+            elif hasattr(self.match, 'completed') and self.match.completed:
+                # Duration might be in completed timestamp
+                duration_ms = getattr(self.match.completed, 'timestamp', 0)
+            else:
+                duration_ms = 0
 
-        # Convert to minutes
-        duration_minutes = duration_ms / 1000 / 60
+            if not duration_ms or duration_ms == 0:
+                print("Warning: Could not determine game duration")
+                return
+
+            # Convert to minutes
+            duration_minutes = duration_ms / 1000 / 60
+
+        except Exception as e:
+            print(f"Warning: Error getting duration: {e}")
+            return
 
         # Count actions per player
         action_counts = defaultdict(int)
 
-        # Parse actions from the file
+        # Try to get actions from the match object
         try:
-            with open(self.record_file_path, 'rb') as f:
-                parser = fast.parse(f)
-
-                # Iterate through all operations/actions
-                for operation in parser.get('action', []):
-                    player_number = operation.get('player_number')
-                    if player_number is not None:
-                        action_counts[player_number] += 1
+            if hasattr(self.match, 'actions'):
+                for action in self.match.actions:
+                    if hasattr(action, 'player'):
+                        player_number = getattr(action.player, 'number', None)
+                        if player_number is not None:
+                            action_counts[player_number] += 1
         except Exception as e:
-            print(f"Warning: Could not parse actions: {e}")
-            # Fallback: try to get action counts from summary
+            print(f"Warning: Could not count actions from match object: {e}")
+
+        # Fallback: Parse actions directly from file
+        if not action_counts:
             try:
-                for player in self.summary.get_players():
-                    player_number = player.get('number')
-                    if player_number is not None:
-                        # Some versions provide action count directly
-                        actions = player.get('action_count', 0)
-                        if actions > 0:
-                            action_counts[player_number] = actions
-            except:
-                pass
+                with open(self.record_file_path, 'rb') as f:
+                    # Skip header
+                    header.parse_stream(f)
+
+                    # Get file size
+                    f.seek(0, 2)
+                    eof = f.tell()
+                    f.seek(0)
+                    header.parse_stream(f)
+
+                    # Count operations
+                    while f.tell() < eof:
+                        try:
+                            op = fast.operation(f)
+                            if op and 'player_number' in op:
+                                action_counts[op['player_number']] += 1
+                        except:
+                            break
+
+            except Exception as e:
+                print(f"Warning: Could not parse actions directly: {e}")
 
         # Calculate APM for each player
         for player_number, action_count in action_counts.items():
