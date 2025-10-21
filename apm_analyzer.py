@@ -3,7 +3,8 @@ AOE2 Record APM Analyzer
 Extracts and calculates Actions Per Minute (APM) from .aoe2record files.
 """
 
-import mgz
+from mgz.summary import Summary
+from mgz import fast
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple
 import os
@@ -43,7 +44,7 @@ class APMAnalyzer:
         """
         try:
             with open(self.record_file_path, 'rb') as f:
-                self.summary = mgz.summary.Summary(f)
+                self.summary = Summary(f)
                 self._extract_player_info()
                 self._calculate_apm()
             return True
@@ -87,7 +88,7 @@ class APMAnalyzer:
         # Parse actions from the file
         try:
             with open(self.record_file_path, 'rb') as f:
-                parser = mgz.fast.parse(f)
+                parser = fast.parse(f)
 
                 # Iterate through all operations/actions
                 for operation in parser.get('action', []):
