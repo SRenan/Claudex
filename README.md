@@ -4,27 +4,35 @@ A Python tool for extracting and analyzing player APM (Actions Per Minute) from 
 
 ## Features
 
+- **User-Friendly GUI** - Double-click to open, browse for files, view results
+- **Command-Line Interface** - For scripting and automation
 - Parse `.aoe2record` files from Age of Empires 2: Definitive Edition
 - Extract player APM statistics for all players in a game
 - Display player information including name, civilization, and winner status
 - Support for single file and batch processing
 - Output in human-readable text or JSON format
 - Export results to file
-- **Standalone Windows executable available** (no Python installation required!)
+- **Standalone Windows executable** (no Python installation required!)
 
 ## Getting Started
 
-### Option 1: Standalone Executable (Recommended for Windows Users)
+### Option 1: Standalone Executable (Recommended)
 
 **No Python installation required!**
 
 1. Download the latest `aoe2-apm.exe` from the [Releases](../../releases) page
-2. Run it from the command line:
+
+2. **GUI Mode (Easy):**
+   - Double-click `aoe2-apm.exe`
+   - Click "Select File" to choose a .aoe2record file
+   - View APM results instantly!
+
+3. **CLI Mode (Advanced):**
    ```cmd
    aoe2-apm.exe game.aoe2record
    ```
 
-That's it! See [BUILD.md](BUILD.md) for how to build the executable yourself.
+See [BUILD.md](BUILD.md) for how to build the executable yourself.
 
 ### Option 2: Python Script (For Developers)
 
@@ -48,12 +56,28 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Command Line Interface
+### Graphical User Interface (GUI)
+
+**The easiest way to use the tool:**
+
+1. **Double-click** `aoe2-apm.exe` (or run `python apm_gui.py`)
+2. **Click "Select File"** to choose a .aoe2record file
+3. **View results** in the window
+4. **Export to JSON** if needed
+
+**Batch processing:**
+- Click "Select Folder" to analyze all .aoe2record files in a directory
+
+### Command Line Interface (CLI)
+
+For automation and scripting, you can use command-line arguments.
 
 #### Basic Usage
 
 Analyze a single record file:
 ```bash
+aoe2-apm.exe game.aoe2record
+# or
 python apm_cli.py game.aoe2record
 ```
 
