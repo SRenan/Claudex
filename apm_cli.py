@@ -109,25 +109,39 @@ def process_batch(files: List[str], output_format: str = 'text', output_file: st
 
 def main():
     """Main CLI entry point."""
+    # If no arguments provided, launch GUI
+    if len(sys.argv) == 1:
+        try:
+            from apm_gui import launch_gui
+            launch_gui()
+            return
+        except ImportError:
+            print("GUI dependencies not available. Please provide command-line arguments.", file=sys.stderr)
+            print("Run with --help for usage information.", file=sys.stderr)
+            sys.exit(1)
+
     parser = argparse.ArgumentParser(
         description='Extract player APM (Actions Per Minute) from AOE2 record files.',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Run with GUI (no arguments)
+  aoe2-apm.exe
+
   # Analyze a single record file
-  python apm_cli.py game.aoe2record
+  aoe2-apm.exe game.aoe2record
 
   # Analyze with JSON output
-  python apm_cli.py game.aoe2record --format json
+  aoe2-apm.exe game.aoe2record --format json
 
   # Analyze all files in a directory
-  python apm_cli.py /path/to/records/ --batch
+  aoe2-apm.exe /path/to/records/ --batch
 
   # Save results to a file
-  python apm_cli.py game.aoe2record --format json --output results.json
+  aoe2-apm.exe game.aoe2record --format json --output results.json
 
   # Batch process and save to JSON
-  python apm_cli.py /path/to/records/ --batch --format json --output all_results.json
+  aoe2-apm.exe /path/to/records/ --batch --format json --output all_results.json
         """
     )
 

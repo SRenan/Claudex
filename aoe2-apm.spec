@@ -2,6 +2,7 @@
 """
 PyInstaller spec file for AOE2 APM Analyzer
 This creates a standalone Windows executable with no external dependencies.
+Supports both GUI (double-click) and CLI (command-line) modes.
 
 Usage:
     pyinstaller aoe2-apm.spec
@@ -10,7 +11,7 @@ Usage:
 block_cipher = None
 
 a = Analysis(
-    ['apm_cli.py'],
+    ['apm_cli.py', 'apm_gui.py'],  # Include both CLI and GUI
     pathex=[],
     binaries=[],
     datas=[
@@ -23,13 +24,18 @@ a = Analysis(
         'mgz.fast',
         'mgz.header',
         'mgz.body',
+        'tkinter',
+        'tkinter.filedialog',
+        'tkinter.messagebox',
+        'tkinter.scrolledtext',
+        'tkinter.ttk',
     ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
         # Exclude unused modules to reduce size
-        'tkinter',
+        # Note: tkinter is now INCLUDED for GUI support
         'matplotlib',
         'numpy',
         'pandas',
